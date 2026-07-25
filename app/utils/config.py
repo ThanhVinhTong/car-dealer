@@ -8,6 +8,10 @@ from pathlib import Path
 @dataclass(frozen=True)
 class Config:
     database_url: str
+    cars_table: str
+    price_history_table: str
+    price_history_price_column: str
+    price_history_recorded_at_column: str
     scraper_source: str
     marketplace_location: str
     min_price: int
@@ -31,6 +35,19 @@ def load_config(env_file: str | Path | None = ".env") -> Config:
 
     return Config(
         database_url=database_url,
+        cars_table=os.getenv("CARS_TABLE", "cars").strip() or "cars",
+        price_history_table=(
+            os.getenv("PRICE_HISTORY_TABLE", "car_price_history").strip()
+            or "car_price_history"
+        ),
+        price_history_price_column=(
+            os.getenv("PRICE_HISTORY_PRICE_COLUMN", "price_aud").strip()
+            or "price_aud"
+        ),
+        price_history_recorded_at_column=(
+            os.getenv("PRICE_HISTORY_RECORDED_AT_COLUMN", "recorded_at").strip()
+            or "recorded_at"
+        ),
         scraper_source=os.getenv("SCRAPER_SOURCE", "facebook_marketplace").strip()
         or "facebook_marketplace",
         marketplace_location=marketplace_location,
