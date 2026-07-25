@@ -133,6 +133,43 @@ class CarParserTests(unittest.TestCase):
 
                 self.assertIsNone(car)
 
+    def test_parser_detects_high_confidence_problem_signals(self):
+        car = CarParser(MAKES, MODELS).parse(
+            make_raw(
+                title="320i engine blown, need gone",
+                description="Not running, no start",
+            )
+        )
+
+        self.assertIsNotNone(car)
+        self.assertTrue(car["problem_detected"])
+        self.assertEqual(car["issue_type"], "engine_failure")
+        self.assertEqual(car["issue_confidence"], "high")
+        self.assertIn("engine_failure", car["issue_types"])
+        self.assertIn("mechanical_failure", car["issue_types"])
+
+    def test_parser_detects_low_confidence_unknown_problem(self):
+        car = CarParser(MAKES, MODELS).parse(
+            make_raw(title="BMW 320i needs TLC", description="Needs TLC, minor issues")
+        )
+
+        self.assertIsNotNone(car)
+        self.assertTrue(car["problem_detected"])
+        self.assertEqual(car["issue_type"], "unknown_problem")
+        self.assertEqual(car["issue_confidence"], "low")
+        self.assertEqual(car["issue_types"], ["unknown_problem"])
+
+    def test_parser_excludes_recent_engine_replacement(self):
+        car = CarParser(MAKES, MODELS).parse(
+            make_raw(title="2015 BMW 320i engine recently replaced", description="Fresh engine fitted")
+        )
+
+        self.assertIsNotNone(car)
+        self.assertFalse(car["problem_detected"])
+        self.assertIsNone(car["issue_type"])
+        self.assertIsNone(car["issue_confidence"])
+        self.assertEqual(car["issue_types"], [])
+
     def test_parser_filters_known_years_before_2012_and_reviews_missing_year(self):
         parser = CarParser(MAKES, MODELS)
 
