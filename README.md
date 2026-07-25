@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # BMW Marketplace Scraper
 
 A local-first Python V1 pipeline that generates BMW Facebook Marketplace
@@ -196,6 +195,3 @@ the next requested change.
 More implementation history is recorded in
 [implementation-note.md](implementation-note.md), with the consolidated
 status in [PROJECT-STATUS.md](PROJECT-STATUS.md).
-=======
-# car-dealer
->>>>>>> b40049f44dfc518a9d46a8424e467b96406a4282
