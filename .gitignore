@@ -1,0 +1,48 @@
+# Secrets and local configuration
+.env
+.env.*
+confidential/
+**/confidential/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Playwright and test output
+playwright-report/
+test-results/
+blob-report/
+
+# Generated scraper output
+exports/*.csv
+*.log
+logs/
+
+# Local inputs not used by V1
+queries.txt
+
+# Unrelated local prototype
+datadome_clone/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
