@@ -1,6 +1,5 @@
 # Secrets and local configuration
 .env
-.env.*
 confidential/
 **/confidential/
 
