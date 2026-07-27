@@ -274,9 +274,3 @@ The current implementation still excludes:
 - Apify webhook and run-status APIs;
 - non-Apify cloud deployment;
 - `queries.txt`.
-
-## Handoff
-
-Use [APIFY-HANDOFF.md](APIFY-HANDOFF.md) for the Actor-to-backend handoff.
-Implementation history and verification evidence are recorded in
-[implementation-note.md](implementation-note.md).
