@@ -81,6 +81,69 @@ BMW_SERIES_BADGES = (
     ("7 Series", ("7 series", "728i", "730i", "730d", "735i", "735d", "740i", "740d", "745i", "750i", "750d", "760i")),
 )
 
+PROBLEM_ISSUE_RULES = (
+    {
+        "issue_type": "engine_failure",
+        "confidence": "high",
+        "patterns": (
+            r"\bengine blown\b",
+            r"\bengine seized\b",
+            r"\bengine gone\b",
+            r"\bneeds new engine\b",
+            r"\bneeds engine\b",
+        ),
+    },
+    {
+        "issue_type": "transmission_failure",
+        "confidence": "high",
+        "patterns": (
+            r"\btransmission (?:issue|problem|fault)\b",
+            r"\bgearbox (?:issue|problem|fault)\b",
+            r"\bnot shifting\b",
+        ),
+    },
+    {
+        "issue_type": "accident_damage",
+        "confidence": "high",
+        "patterns": (
+            r"\baccident damaged\b",
+            r"\bsalvage\b",
+            r"\bcrash(?:ed)?\b",
+            r"\bwritten off\b",
+        ),
+    },
+    {
+        "issue_type": "mechanical_failure",
+        "confidence": "high",
+        "patterns": (
+            r"\bnot running\b",
+            r"\bwon['’]?t start\b",
+            r"\bdoesn['’]?t start\b",
+            r"\bno start\b",
+            r"\bnot driveable\b",
+        ),
+    },
+    {
+        "issue_type": "unknown_problem",
+        "confidence": "low",
+        "patterns": (
+            r"\bneeds tlc\b",
+            r"\bneeds work\b",
+            r"\bproject car\b",
+            r"\brepair required\b",
+            r"\bminor issues?\b",
+            r"\bproblem\b",
+        ),
+    },
+)
+
+ISSUE_EXCLUSION_PATTERNS = (
+    r"\bengine recently replaced\b",
+    r"\bnew engine\b",
+    r"\bfresh engine\b",
+    r"\bengine rebuilt\b",
+)
+
 
 class CarParser:
     def __init__(self, makes: list[dict], models: list[dict]) -> None:
@@ -135,6 +198,10 @@ class CarParser:
         if odometer_km is None:
             odometer_km = parse_odometer_km(description, require_unit=True)
 
+        problem_detected, issue_types, issue_type, issue_confidence = (
+            self._detect_listing_issues(combined_text)
+        )
+
         return {
             "car_id": None,
             "source": raw_listing.get("source") or "facebook_marketplace",
@@ -171,6 +238,10 @@ class CarParser:
             ),
             "series_priority": series_priority,
             "requires_review": manufacture_year is None,
+            "problem_detected": problem_detected,
+            "issue_type": issue_type,
+            "issue_confidence": issue_confidence,
+            "issue_types": issue_types,
             "raw_payload": raw_listing,
         }
 
@@ -316,6 +387,46 @@ class CarParser:
             return None
         value = str(seller_type).strip().casefold()
         return value if value in {"private", "dealer", "unknown"} else None
+
+    def _detect_listing_issues(self, text: str) -> tuple[bool, list[str], str | None, str | None]:
+        if not text:
+            return False, [], None, None
+
+        detected: list[tuple[str, str]] = []
+        for rule in PROBLEM_ISSUE_RULES:
+            if rule["issue_type"] == "engine_failure" and self._has_exclusion_phrase(text):
+                continue
+
+            for pattern in rule["patterns"]:
+                if re.search(pattern, text):
+                    detected.append((rule["issue_type"], rule["confidence"]))
+                    break
+
+        if not detected:
+            return False, [], None, None
+
+        issue_types: list[str] = []
+        issue_type: str | None = None
+        issue_confidence = "low"
+
+        for issue, confidence in detected:
+            if issue not in issue_types:
+                issue_types.append(issue)
+
+            if confidence == "high" and issue_type is None:
+                issue_type = issue
+                issue_confidence = "high"
+
+        if issue_type is None:
+            issue_type, issue_confidence = detected[0]
+
+        return True, issue_types, issue_type, issue_confidence
+
+    def _has_exclusion_phrase(self, text: str) -> bool:
+        for pattern in ISSUE_EXCLUSION_PATTERNS:
+            if re.search(pattern, text):
+                return True
+        return False
 
     def _resolve_listing_id(self, raw_listing: dict, normalized_url: str | None) -> str | None:
         listing_id = extract_listing_id(normalized_url)
