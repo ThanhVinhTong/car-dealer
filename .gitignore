@@ -20,16 +20,20 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+storage/
+apify_storage/
 
 # Playwright and test output
 playwright-report/
 test-results/
 blob-report/
+playwright/.auth/
 
 # Generated scraper output
 exports/*.csv
 *.log
 logs/
+APIFY-*.md
 
 # Local inputs not used by V1
 queries.txt

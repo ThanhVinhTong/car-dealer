@@ -1,0 +1,12 @@
+{
+  "actorSpecification": 1,
+  "name": "bmw-facebook-marketplace-scraper",
+  "title": "BMW Facebook Marketplace Scraper",
+  "description": "Collects raw BMW Facebook Marketplace listing cards for backend processing.",
+  "version": "1.0",
+  "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  }
+}

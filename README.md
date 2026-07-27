@@ -128,6 +128,60 @@ python app/main.py
 
 CSV files are written to `exports/` unless `EXPORT_DIR` is changed.
 
+## Apify Actor
+
+The repository includes a separate Apify Actor entry point that collects raw
+Marketplace cards into the Actor run's default dataset:
+
+```text
+Apify input
+  -> generated BMW search targets
+  -> FacebookMarketplaceScraper
+  -> raw listing dataset
+```
+
+The Actor deliberately does not load `DATABASE_URL`, parse cars, write
+Supabase rows, create price history, or export CSV. Khanh's webhook backend
+owns dataset parsing and persistence after the Actor run completes.
+
+Actor input example:
+
+```json
+{
+  "marketplaceLocation": "perth",
+  "minPrice": 5000,
+  "modelNames": ["3 Series"],
+  "maxResultsPerSearchUrl": 5,
+  "requestDelaySeconds": 2
+}
+```
+
+The input form also requires `facebookStorageState`, an encrypted secret
+Playwright storage-state object captured from an authenticated Facebook
+session. It is intentionally omitted from examples and must never be committed
+or copied into logs, documentation, or dataset output. The local capture path
+`playwright/.auth/facebook.json` is gitignored.
+
+Package files are under `.actor/`; the runtime entry point is
+`app/apify_main.py`. After installing and authenticating the Apify CLI, deploy
+from the repository root:
+
+```bash
+apify validate-schema .actor/input_schema.json
+apify push
+```
+
+The Actor `dukich/bmw-facebook-marketplace-scraper` version `1.0` completed an
+authenticated five-item cloud smoke test on 27 July 2026. The hardened package
+was subsequently published successfully as build `1.0.7`. Its output contract
+is raw: `price_text`, listing text, and search metadata are passed to the
+existing backend parser. A pre-2012 or E-generation listing in this dataset is
+expected and must be rejected by `CarParser` before database insertion.
+
+The complete configuration, output contract, operating procedure,
+troubleshooting notes, and Khanh checklist are in
+[APIFY-HANDOFF.md](APIFY-HANDOFF.md).
+
 ## CSV Output
 
 The exporter writes the existing `cars` table shape:
@@ -172,12 +226,13 @@ parsing, year extraction, BMW model mapping, parts filtering, listing-ID
 preservation, transactional car upserts, price-history rules, database
 deduplication, CSV export, and both supported entry points.
 
-Current verification: 40 tests passing.
+Current verification is recorded in [implementation-note.md](implementation-note.md).
 
 ## Project Structure
 
 ```text
 app/
+  apify_main.py
   main.py
   parsers/
     car_parser.py
@@ -189,15 +244,21 @@ app/
     postgres.py
   utils/
     bmw.py
+    capture_facebook_session.py
     config.py
     logger.py
     normalize.py
     search_urls.py
 tests/
+.actor/
+  actor.json
+  input_schema.json
+  dataset_schema.json
+  output_schema.json
+  Dockerfile
+  requirements.txt
+APIFY-HANDOFF.md
 exports/
-PROJECT-STATUS.md
-implementation-note.md
-CODEX-HANDOFF-PROMPT.md
 requirements.txt
 ```
 
@@ -211,16 +272,11 @@ The current implementation still excludes:
 - notifications and dashboards;
 - Gumtree and dealer sites;
 - Apify webhook and run-status APIs;
-- cloud deployment;
+- non-Apify cloud deployment;
 - `queries.txt`.
 
 ## Handoff
 
-Use [CODEX-HANDOFF-PROMPT.md](CODEX-HANDOFF-PROMPT.md) when moving the
-project to another folder or starting a new Codex task. It contains the
-current constraints, behavior, verification command, and a placeholder for
-the next requested change.
-
-More implementation history is recorded in
-[implementation-note.md](implementation-note.md), with the consolidated
-status in [PROJECT-STATUS.md](PROJECT-STATUS.md).
+Use [APIFY-HANDOFF.md](APIFY-HANDOFF.md) for the Actor-to-backend handoff.
+Implementation history and verification evidence are recorded in
+[implementation-note.md](implementation-note.md).
