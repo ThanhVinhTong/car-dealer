@@ -1,0 +1,68 @@
+{
+  "title": "BMW Marketplace scraper input",
+  "description": "Configure BMW Marketplace searches for one Actor run.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "marketplaceLocation": {
+      "title": "Marketplace location",
+      "description": "Facebook Marketplace location path, such as perth.",
+      "type": "string",
+      "editor": "textfield",
+      "default": "perth",
+      "minLength": 1
+    },
+    "minPrice": {
+      "title": "Minimum price",
+      "description": "Minimum listing price in AUD.",
+      "type": "integer",
+      "editor": "number",
+      "default": 5000,
+      "minimum": 0
+    },
+    "modelNames": {
+      "title": "BMW model families",
+      "description": "BMW model families to search.",
+      "type": "array",
+      "editor": "json",
+      "default": [
+        "3 Series"
+      ],
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "maxResultsPerSearchUrl": {
+      "title": "Maximum results per search",
+      "description": "Maximum listing cards collected from each search URL.",
+      "type": "integer",
+      "editor": "number",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 200
+    },
+    "requestDelaySeconds": {
+      "title": "Request delay",
+      "description": "Delay between Marketplace searches.",
+      "type": "number",
+      "editor": "number",
+      "default": 2,
+      "minimum": 0
+    },
+    "facebookStorageState": {
+      "title": "Facebook authenticated browser state",
+      "description": "Encrypted Playwright storage state for Facebook.",
+      "type": "object",
+      "editor": "json",
+      "isSecret": true
+    }
+  },
+  "required": [
+    "marketplaceLocation",
+    "modelNames",
+    "facebookStorageState"
+  ],
+  "additionalProperties": false
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections import Counter
 from pathlib import Path
 
 
@@ -24,10 +25,16 @@ def main() -> int:
     logger = get_logger("app.main")
 
     if config.scraper_source != "facebook_marketplace":
-        raise ValueError("V1 only supports SCRAPER_SOURCE=facebook_marketplace")
+        raise ValueError("Only SCRAPER_SOURCE=facebook_marketplace is supported")
 
     logger.info("Scraper start")
-    storage = PostgresStorage(config.database_url)
+    storage = PostgresStorage(
+        config.database_url,
+        cars_table=config.cars_table,
+        price_history_table=config.price_history_table,
+        price_history_price_column=config.price_history_price_column,
+        price_history_recorded_at_column=config.price_history_recorded_at_column,
+    )
     makes, models = storage.load_reference_data()
     logger.info("Loaded %s makes from database", len(makes))
     logger.info("Loaded %s models from database", len(models))
@@ -49,6 +56,25 @@ def main() -> int:
     parser = CarParser(makes=makes, models=models)
     normalized_cars = parser.parse_many(raw_listings)
     logger.info("Parsed %s listings", len(normalized_cars))
+
+    upsert_results = storage.upsert_cars(normalized_cars)
+    persistence_counts = Counter(result.action for result in upsert_results)
+    car_ids_by_listing = {
+        (result.source, result.listing_id): result.car_id
+        for result in upsert_results
+    }
+    for car in normalized_cars:
+        key = (str(car.get("source") or ""), str(car.get("listing_id") or ""))
+        car["car_id"] = car_ids_by_listing.get(key)
+    logger.info(
+        "Persisted %s cars: %s inserted, %s updated, %s unchanged; "
+        "%s price-history rows written",
+        len(upsert_results),
+        persistence_counts["inserted"],
+        persistence_counts["updated"],
+        persistence_counts["unchanged"],
+        sum(result.price_history_written for result in upsert_results),
+    )
 
     export_path = export_cars_to_csv(
         cars=normalized_cars,

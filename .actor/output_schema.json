@@ -1,0 +1,12 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "BMW Marketplace scraper output",
+  "description": "Raw Facebook Marketplace listing cards for backend parsing and persistence.",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Raw listings",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

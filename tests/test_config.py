@@ -24,6 +24,13 @@ class ConfigTests(unittest.TestCase):
             config = load_config(env_file=None)
 
         self.assertEqual(config.database_url, "postgresql://user:pass@localhost/db")
+        self.assertEqual(config.cars_table, "cars")
+        self.assertEqual(config.price_history_table, "car_price_history")
+        self.assertEqual(config.price_history_price_column, "price_aud")
+        self.assertEqual(
+            config.price_history_recorded_at_column,
+            "recorded_at",
+        )
         self.assertEqual(config.scraper_source, "facebook_marketplace")
         self.assertEqual(config.marketplace_location, "perth")
         self.assertEqual(config.min_price, 5000)
